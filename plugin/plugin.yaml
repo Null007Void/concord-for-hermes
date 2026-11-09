@@ -1,0 +1,47 @@
+name: concord-for-hermes
+version: 0.1.0
+manifest_version: 2
+api_version: 1
+# Tested baseline, not a guarantee about untested future Hermes releases.
+requires_hermes: ">=0.21.3"
+kind: standalone
+author: Null007Void | Null Foundry
+description: >-
+  Coordinates file updates on GitHub so independent Hermes sessions cannot
+  silently overwrite or repeat one another's work. Enrolled calls go through the
+  concord_github_write tool, which reserves the target file, writes with the
+  provider's own conditional-write check, verifies by read-back and settles in
+  one of five honest outcomes: confirmed, replayed, conflict, unknown, refused.
+  NOT PROTECTED by this plugin: any other tool, a shell command, a browser or
+  raw HTTP action, a direct `gh` call, a disabled plugin, a non-enrolled profile
+  or another machine. The covered scope is one action family - replacing the
+  content of a file that already exists, on one branch of one allowlisted
+  repository. An unknown outcome is held and never retried automatically;
+  `hermes concord status` shows it and `hermes concord reconcile` settles it
+  from a provider read.
+provides_tools:
+  - concord_github_write
+# No privileged host surface is requested: no built-in tool override, no
+# host-owned LLM call or direct secret_scope credential access. The `gh` child
+# resolves existing user credentials; see README for the full disclosure.
+capabilities: []
+config_schema:
+  allowed_repositories:
+    type: list
+    default: []
+    description: >-
+      Repositories Concord may write to, as owner/repo. Empty means every call
+      is refused - there is no default target and a model argument cannot widen
+      this list.
+  gh_command:
+    type: list
+    default: ["gh"]
+    description: Executable prefix used to run the GitHub CLI.
+  timeout_seconds:
+    type: int
+    default: 30
+    description: Per-invocation timeout for a gh call, in seconds.
+tags:
+  - github
+  - coordination
+  - safety

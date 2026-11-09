@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.db
+*.db-wal
+*.db-shm
+# Secrets never belong in the tree; the plugin reads none, and neither does a
+# contributor's shell. `.env.example` is not used by this repository.
+.env
+.env.*
+# Local transcripts and demo captures are evidence, not release artifacts.
+*.log
+logs/

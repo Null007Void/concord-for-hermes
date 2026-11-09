@@ -1,0 +1,17 @@
+name: concord_probe
+version: 0.2.0
+description: >-
+  Synthetic C1 integration probe plus the C2 coordination kernel for Concord for
+  Hermes. Loads two throwaway tools plus a pre_tool_call hook and a
+  tool_execution middleware so the real Hermes dispatch paths can be exercised
+  without a model, a network call or a real provider. The kernel module is not
+  registered as a tool surface. Not the product and not for distribution.
+author: Null007Void | Null Foundry
+kind: standalone
+provides_tools:
+  - concord_probe_write
+  - concord_probe_mutate
+provides_hooks:
+  - pre_tool_call
+provides_middleware:
+  - tool_execution
