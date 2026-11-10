@@ -13,8 +13,9 @@ Design constraints, each one enforced below rather than described:
     model argument. There is no field in any payload or key that can widen it.
   * **The request body goes through ``--input``, a temp file.** File content
     and commit message never appear in argv, so they never appear in a process
-    listing. The adapter does not read, copy, log or persist a credential: the
-    environment is inherited unread and ``gh`` resolves its own token.
+    listing. A fixed environment allowlist passes only CLI/configuration,
+    GitHub authentication, proxy, certificate and locale settings to ``gh``.
+    Token values are forwarded in memory, never logged or persisted.
   * **A minimum ``gh`` version, checked and failing closed.** An unparseable or
     old version is a refusal, never a "probably fine".
   * **Receipt fields** ``content.sha`` and ``commit.sha`` follow the GitHub
@@ -88,6 +89,29 @@ DEFINITIVE_REFUSALS = {
     409: "stale_revision",
     422: "unprocessable",
 }
+
+
+# Do not pass Hermes/provider secrets or arbitrary wrapper settings to gh.
+# Keep both subprocess paths on this one explicit allowlist. Lowercase proxy
+# names are used by common HTTP clients on case-sensitive platforms.
+_GH_ENV_KEYS = (
+    "PATH", "HOME", "XDG_CONFIG_HOME", "GH_CONFIG_DIR",
+    "GH_TOKEN", "GITHUB_TOKEN", "GH_ENTERPRISE_TOKEN",
+    "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY",
+    "http_proxy", "https_proxy", "no_proxy",
+    "SSL_CERT_FILE", "SSL_CERT_DIR", "LANG", "LC_ALL",
+)
+_GH_WINDOWS_ENV_KEYS = (
+    "USERPROFILE", "APPDATA", "LOCALAPPDATA", "SYSTEMROOT", "TEMP", "TMP",
+)
+
+
+def _gh_environment() -> dict[str, str]:
+    """Build a fresh minimal child environment without logging credential values."""
+    keys = _GH_ENV_KEYS
+    if os.name == "nt":
+        keys += _GH_WINDOWS_ENV_KEYS
+    return {key: os.environ[key] for key in keys if key in os.environ}
 
 
 # ----------------------------------------------------------------- errors
@@ -439,6 +463,7 @@ class GithubContentsAdapter:
                 errors="replace",
                 timeout=self.timeout_s,
                 stdin=subprocess.DEVNULL,
+                env=_gh_environment(),
             )
         except FileNotFoundError as exc:
             raise AdapterUnavailable(
@@ -480,6 +505,7 @@ class GithubContentsAdapter:
                 errors="strict",
                 timeout=self.timeout_s,
                 stdin=subprocess.DEVNULL,
+                env=_gh_environment(),
             )
         except FileNotFoundError as exc:
             # Spawn failed: no request can have left the process.

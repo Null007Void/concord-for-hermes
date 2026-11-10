@@ -206,7 +206,7 @@ def test_a_pruned_receipt_still_refuses_a_second_write(run, gh, monkeypatch):
 
 # ------------------------------------------------------------------- conflict
 def test_a_stale_base_is_refused_by_the_provider_and_settled_as_failed(run, gh, monkeypatch):
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_stale")
+    H.set_config(fixture="write_stale")
     shape = _call(run)
 
     assert shape["outcome"] == "conflict"
@@ -219,11 +219,11 @@ def test_a_stale_base_is_refused_by_the_provider_and_settled_as_failed(run, gh, 
 
 
 def test_a_second_intent_on_a_held_object_is_refused_with_the_holder_named(run, gh, monkeypatch):
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_ambiguous")
+    H.set_config(fixture="write_ambiguous")
     first = _call(run, operation_id="op-held")
     assert first["outcome"] == "unknown"
 
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_ok")
+    H.set_config(fixture="write_ok")
     shape = _call(run, operation_id="op-next")
 
     assert shape["outcome"] == "conflict"
@@ -237,7 +237,7 @@ def test_a_second_intent_on_a_held_object_is_refused_with_the_holder_named(run, 
 
 # -------------------------------------------------------------------- unknown
 def test_an_ambiguous_outcome_is_unknown_held_and_never_retried(run, gh, monkeypatch):
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_ambiguous")
+    H.set_config(fixture="write_ambiguous")
     shape = _call(run, operation_id="op-amb")
 
     assert shape["outcome"] == "unknown"
@@ -250,11 +250,11 @@ def test_an_ambiguous_outcome_is_unknown_held_and_never_retried(run, gh, monkeyp
 
 
 def test_retrying_the_unknown_operation_itself_does_not_write_again(run, gh, monkeypatch):
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_ambiguous")
+    H.set_config(fixture="write_ambiguous")
     _call(run, operation_id="op-amb")
     writes = H.writes(gh.root)
 
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_ok")
+    H.set_config(fixture="write_ok")
     shape = _call(run, operation_id="op-amb")
 
     assert shape["outcome"] == "conflict"

@@ -79,7 +79,7 @@ def test_a_confirmed_operation_replays_with_gh_missing(tmp_path, gh):
 
 def test_a_confirmed_operation_replays_when_gh_is_too_old(tmp_path, gh, monkeypatch):
     assert _confirm(tmp_path, gh)["outcome"] == "confirmed"
-    monkeypatch.setenv("FAKEGH_VERSION", "1.0.0")
+    H.set_config(version="1.0.0")
     captures = len(H.captures(gh.root))
 
     repeat = T.run_write(_args(expected_revision=gh.sha), settings=_working(tmp_path))
@@ -125,10 +125,10 @@ def test_a_pruned_receipt_still_replays_offline_and_does_not_urge_a_second_write
 def test_a_reconciled_receipt_replays_offline(tmp_path, gh, monkeypatch):
     import concord_gh_adapter as A
 
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_ambiguous")
+    H.set_config(fixture="write_ambiguous")
     assert _confirm(tmp_path, gh)["outcome"] == "unknown"
 
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_ok")
+    H.set_config(fixture="write_ok")
     coordinator = K.Coordinator(str(tmp_path / "coordinator.db"))
     adapter = H.adapter(gh.root)
     settled = A.reconcile_from_provider(
@@ -147,7 +147,7 @@ def test_a_reconciled_receipt_replays_offline(tmp_path, gh, monkeypatch):
 
 def test_an_unresolved_operation_answers_from_the_store_when_gh_is_missing(tmp_path, gh, monkeypatch):
     """`unknown` is a local fact: repeating it must not need the provider."""
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_ambiguous")
+    H.set_config(fixture="write_ambiguous")
     assert _confirm(tmp_path, gh)["outcome"] == "unknown"
 
     repeat = T.run_write(
@@ -172,7 +172,7 @@ def test_a_new_operation_still_needs_a_working_provider(tmp_path, gh):
 
 def test_a_retry_of_a_proved_non_execution_still_needs_the_provider(tmp_path, gh, monkeypatch):
     """Nothing was applied, so there is no receipt to replay - the adapter runs."""
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_stale")
+    H.set_config(fixture="write_stale")
     first = _confirm(tmp_path, gh)
     assert first["state"] == "failed_before_execution", first
 

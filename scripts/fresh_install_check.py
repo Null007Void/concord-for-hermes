@@ -326,8 +326,7 @@ def _walkthrough(args: argparse.Namespace, t: Transcript) -> None:
         "CONCORD_FRESH_HOME": str(home).replace("\\", "/"),
         "CONCORD_ARCHIVE": str(archive).replace("\\", "/"),
         "CONCORD_GH_MOCK": "1",
-        "FAKEGH_STATE": str(tmp / "fake-gh").replace("\\", "/"),
-        "FAKEGH_VERSION": "2.40.1",
+        "GH_CONFIG_DIR": str(tmp / "fake-gh").replace("\\", "/"),
     })
 
     def run(argv: list[str], **kwargs) -> subprocess.CompletedProcess:
@@ -402,7 +401,7 @@ def _walkthrough(args: argparse.Namespace, t: Transcript) -> None:
     def call(operation_id: str, content: str, fixture: str, *, expected: str = "") -> dict:
         """One tool call through the real loader. ``expected`` is the revision a
         caller would read now; the tool requires it (review P1-1)."""
-        env["FAKEGH_FIXTURE"] = fixture
+        H.set_config(tmp / "fake-gh", fixture=fixture, version="2.40.1")
         revision = expected or H.repo_state(tmp / "fake-gh")["files"]["notes/plan.md"]["sha"]
         completed = run(
             [str(python), str(driver),
@@ -464,7 +463,7 @@ def _walkthrough(args: argparse.Namespace, t: Transcript) -> None:
     status = cli("concord", "status")
     t.check("held" in status.stdout.lower(), "status shows the held object")
 
-    env["FAKEGH_FIXTURE"] = "read_ok"
+    H.set_config(tmp / "fake-gh", fixture="read_ok")
     reconcile = cli("concord", "reconcile", "plan-ambiguous")
     t.check(reconcile.returncode == 0, "reconcile settles from a provider read")
 

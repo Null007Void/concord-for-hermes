@@ -19,6 +19,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def _worker() -> None:
+    sys.path.insert(0, str(ROOT / "tests"))
+    from fakegh.config import configure
     sys.path.insert(0, str(ROOT / "plugin"))
     import concord_gh_adapter as A
     import concord_kernel as K
@@ -39,8 +41,8 @@ def _worker() -> None:
                          "branch": "main", "files": files}],
             "writes": 0,
         }), encoding="utf-8")
-        os.environ.update(FAKEGH_STATE=str(state), FAKEGH_FIXTURE="write_ok",
-                          FAKEGH_VERSION="2.40.1", CONCORD_GH_MOCK="1")
+        os.environ.update(GH_CONFIG_DIR=str(state), CONCORD_GH_MOCK="1")
+        configure(state, fixture="write_ok", version="2.40.1")
         command = (sys.executable, str(ROOT / "tests" / "fakegh" / "gh.py"))
         settings = S.Settings(allowed_repositories=(("octo", "disposable"),),
                               gh_command=command, timeout_s=3, store_path=root / "coordinator.db")
@@ -63,11 +65,11 @@ def _worker() -> None:
         call("conflict", operation_id="demo-stale", content="stale draft\n")
         call("refused", repository="other/not-allowed", operation_id="demo-denied")
         current = json.loads((state / "repo.json").read_text(encoding="utf-8"))["files"]["notes/plan.md"]["sha"]
-        os.environ["FAKEGH_FIXTURE"] = "write_ambiguous"
+        configure(fixture="write_ambiguous")
         unknown = call("unknown", operation_id="demo-unknown", expected_revision=current, content="ambiguous edit\n")
         if not unknown["held"] or unknown["auto_retry"] is not False:
             raise RuntimeError("Unknown outcome lost its hold or permits automatic retry")
-        os.environ["FAKEGH_FIXTURE"] = "write_ok"
+        configure(fixture="write_ok")
         coordinator = K.Coordinator(str(settings.store_path), normalize_object_key=A.canonical_object_key)
         adapter = A.GithubContentsAdapter(allowed_repositories=set(settings.allowed_repositories),
                                            gh_command=command, timeout_s=3)

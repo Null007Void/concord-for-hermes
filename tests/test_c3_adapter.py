@@ -154,7 +154,7 @@ def test_no_credential_value_reaches_argv_or_the_body(gh, tmp_path, monkeypatch)
     assert sentinel not in capture["body_text"]
     assert capture["gh_token_present"] is True, (
         "the environment must reach gh (that is how gh authenticates), "
-        "while the adapter itself never reads it"
+        "without logging or persisting the token"
     )
 
 

@@ -17,6 +17,7 @@ import sys
 from types import SimpleNamespace
 
 import concord_gh_adapter as A
+from fakegh.config import configure as set_config
 
 FAKEGH = pathlib.Path(__file__).resolve().parent / "fakegh" / "gh.py"
 OWNER, REPO = "octo", "disposable"
@@ -61,9 +62,8 @@ def seed(root: pathlib.Path, files: dict[str, str] | None = None) -> dict[str, s
 
 def configure(monkeypatch, root: pathlib.Path, fixture: str = "write_ok",
               version: str = "2.40.1") -> None:
-    monkeypatch.setenv("FAKEGH_STATE", str(root))
-    monkeypatch.setenv("FAKEGH_FIXTURE", fixture)
-    monkeypatch.setenv("FAKEGH_VERSION", version)
+    monkeypatch.setenv("GH_CONFIG_DIR", str(root))
+    set_config(root, fixture=fixture, version=version)
     monkeypatch.setenv("CONCORD_GH_MOCK", "1")
 
 
@@ -124,7 +124,7 @@ def apply_deferred(root: pathlib.Path) -> dict:
     completed = subprocess.run(
         [sys.executable, str(FAKEGH), "--apply-deferred"],
         capture_output=True, text=True,
-        env={**os.environ, "FAKEGH_STATE": str(root), "PYTHONIOENCODING": "utf-8"},
+        env={**os.environ, "GH_CONFIG_DIR": str(root), "PYTHONIOENCODING": "utf-8"},
     )
     assert completed.returncode == 0, completed.stderr
     return json.loads(completed.stdout)

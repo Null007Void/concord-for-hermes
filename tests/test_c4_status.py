@@ -128,7 +128,7 @@ def test_status_on_a_fresh_install_says_so_and_creates_nothing(tmp_path):
 
 def test_status_shows_the_holder_and_the_safe_next_action(run, gh, tmp_path, monkeypatch):
     monkeypatch.setenv("CONCORD_DB", str(tmp_path / "coordinator.db"))
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_ambiguous")
+    H.set_config(fixture="write_ambiguous")
     assert _tool(run, operation_id="op-held")["outcome"] == "unknown"
 
     result = _cli(["concord", "status"], store=tmp_path / "coordinator.db", tmp_path=tmp_path)
@@ -167,11 +167,11 @@ def test_reconcile_settles_an_unknown_from_evidence_and_releases_the_object(
 ):
     store = tmp_path / "coordinator.db"
     monkeypatch.setenv("CONCORD_DB", str(store))
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_ambiguous")
+    H.set_config(fixture="write_ambiguous")
     assert _tool(run, operation_id="op-amb")["outcome"] == "unknown"
     writes_after_ambiguous = H.writes(gh.root)
 
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_ok")
+    H.set_config(fixture="write_ok")
     result = _cli(["concord", "reconcile", "op-amb"], store=store, tmp_path=tmp_path)
 
     assert result.returncode == 0, result.stderr
@@ -276,7 +276,7 @@ def test_disabling_the_plugin_stops_the_command_but_keeps_the_records(
 ):
     store = tmp_path / "coordinator.db"
     monkeypatch.setenv("CONCORD_DB", str(store))
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_ambiguous")
+    H.set_config(fixture="write_ambiguous")
     assert _tool(run, operation_id="op-held")["outcome"] == "unknown"
 
     home = tmp_path / "home"
@@ -314,7 +314,7 @@ def test_a_status_read_never_waits_for_an_active_writer(run, gh, tmp_path, monke
 
     store = tmp_path / "coordinator.db"
     monkeypatch.setenv("CONCORD_DB", str(store))
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_ok")
+    H.set_config(fixture="write_ok")
     assert _tool(run, operation_id="op-1")["outcome"] == "confirmed"
 
     writer = subprocess.Popen(
@@ -349,7 +349,7 @@ def test_two_status_processes_run_while_a_writer_is_mid_transaction(
     write lock is still held, and neither reports an unreadable store."""
     store = tmp_path / "coordinator.db"
     monkeypatch.setenv("CONCORD_DB", str(store))
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_ok")
+    H.set_config(fixture="write_ok")
     assert _tool(run, operation_id="op-1")["outcome"] == "confirmed"
 
     _cli(["concord", "status"], store=store, tmp_path=tmp_path)  # warm the CLI's imports

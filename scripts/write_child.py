@@ -11,7 +11,7 @@ the review asked for, and the loser must conflict rather than overwrite.
 
 Usage:  python write_child.py '<json payload>'
 Payload keys: operation_id, content, expected_revision, store, repository, path,
-branch, gh (argv list). The fake provider's state comes from FAKEGH_* in the
+branch, gh (argv list). The fake provider's state comes from its GH_CONFIG_DIR in the
 environment.
 """
 from __future__ import annotations

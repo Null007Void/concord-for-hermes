@@ -90,13 +90,12 @@ class AdvisoryHistory:
 
 @contextlib.contextmanager
 def _fake_env(root: pathlib.Path, fixture: str):
-    keys = ("FAKEGH_STATE", "FAKEGH_FIXTURE", "FAKEGH_VERSION", "CONCORD_GH_MOCK")
+    H.set_config(root, fixture=fixture, version="2.40.1")
+    keys = ("GH_CONFIG_DIR", "CONCORD_GH_MOCK")
     saved = {key: os.environ.get(key) for key in keys}
     os.environ.update(
         {
-            "FAKEGH_STATE": str(root),
-            "FAKEGH_FIXTURE": fixture,
-            "FAKEGH_VERSION": "2.40.1",
+            "GH_CONFIG_DIR": str(root),
             "CONCORD_GH_MOCK": "1",
         }
     )

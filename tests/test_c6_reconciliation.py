@@ -69,7 +69,7 @@ def _admit(coord, *, base, base_identity, value="our edit\n", operation_id="op-1
 # ---------------------------------------------------------------- no-op writes
 def test_a_same_content_write_that_applied_is_not_reconciled_as_not_applied(gh, tmp_path, monkeypatch):
     """The review's no-op reproduction: the write landed, the blob did not move."""
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_ambiguous")
+    H.set_config(fixture="write_ambiguous")
     coord = _coord(tmp_path)
     seed_commit = _seed_commit(gh.root)
 

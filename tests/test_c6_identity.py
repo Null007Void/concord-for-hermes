@@ -102,13 +102,13 @@ def test_the_tool_stores_the_canonical_key(run, gh):
 
 # ------------------------------------------------------ the hold is not bypassed
 def test_a_repository_alias_cannot_bypass_an_unresolved_hold(run, gh, monkeypatch):
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_ambiguous")
+    H.set_config(fixture="write_ambiguous")
     first = _call(run, repository="octo/disposable", operation_id="op-held",
                   expected_revision=gh.sha)
     assert first["outcome"] == "unknown", first
     writes_after_ambiguous = H.writes(gh.root)
 
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_ok")
+    H.set_config(fixture="write_ok")
     alias = _call(run, repository="OCTO/Disposable", operation_id="op-alias",
                   expected_revision=gh.sha)
 

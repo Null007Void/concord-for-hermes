@@ -98,9 +98,10 @@ recorded nothing.
   `register_cli_command`, `register_skill`). The manifest declares this baseline.
   Tested at upstream commit
   `c5f347ebe9b840c3dbe5ec99bbe8e36871f24393` and against Hermes 0.21.3.
-- Python 3.14.7 is the tested interpreter. The pinned Hermes checkout declares
-  Python >= 3.11, < 3.15; those other interpreters have not been verified here.
-  Concord itself imports only the standard library.
+- Python 3.14.7 is the full-suite tested interpreter. The pinned Hermes checkout
+  declares Python >= 3.11, < 3.15. Standalone environment and release smoke
+  checks also ran on Linux/Python 3.12.14; the full Hermes suite was not run
+  there. Concord itself imports only the standard library.
 - The GitHub CLI, `gh` >= 2.0.0 (a configured floor: `MIN_GH_VERSION` in
   `plugin/concord_gh_adapter.py`). An older or unparseable `gh` is a refusal,
   never a "probably fine".
@@ -400,9 +401,10 @@ above and tested (`tests/test_c4_status.py`, disable/re-enable case).
 - Subprocesses: the plugin starts `gh --version` and `gh api` as argument lists,
   not shell strings. `gh_command` is trusted operator configuration and can name
   another executable or wrapper; do not accept it from untrusted input.
-- Authentication: `gh` resolves the user's existing login or inherited credential
-  environment. Concord does not fetch tokens through Hermes secret_scope and does
-  not itself read, log or persist their values. This delegated credential behavior
+- Authentication: `gh` resolves the user's existing login or explicitly allowed
+  GitHub token environment variables. Concord does not fetch tokens through
+  Hermes secret_scope. It forwards allowed values in memory without logging or
+  persisting them. This delegated credential behavior
   is disclosed for catalog review; approval under the catalog credential rule is
   not yet confirmed. No credential is bundled with this package.
 - Local data: a SQLite coordinator stores operation identities, digests, receipts
@@ -416,9 +418,17 @@ above and tested (`tests/test_c4_status.py`, disable/re-enable case).
 
 ## Secrets
 
-`gh` owns the credential. Concord never reads, copies, logs or persists a token;
-it spawns `gh` with the environment it inherits and lets `gh` resolve its own
-login. File content and commit messages travel through a `--input` body file,
+`gh` resolves its own login. Both `gh --version` and `gh api` receive a fresh,
+explicitly restricted environment: `PATH`, `HOME`, `XDG_CONFIG_HOME`,
+`GH_CONFIG_DIR`, `GH_TOKEN`, `GITHUB_TOKEN`, `GH_ENTERPRISE_TOKEN`, `HTTP_PROXY`,
+`HTTPS_PROXY`, `NO_PROXY` (plus their lowercase forms), `SSL_CERT_FILE`,
+`SSL_CERT_DIR`, `LANG` and `LC_ALL`. On Windows, `USERPROFILE`, `APPDATA`,
+`LOCALAPPDATA`, `SYSTEMROOT`, `TEMP` and `TMP` are also preserved. Only variables
+already set are included. Allowed token values are copied in memory to the
+child environment, never logged or persisted. Other Hermes/provider secrets
+(such as `OPENAI_API_KEY`) and arbitrary wrapper variables are not forwarded.
+This restriction also applies to operator-configured `gh_command` wrappers.
+File content and commit messages travel through a `--input` body file,
 never through argv, so they do not appear in a process listing. API calls explicitly pin `--hostname github.com`; an ambient `GH_HOST` cannot
 redirect an allowlisted repository to another host. GitHub Enterprise is outside
 this adapter's supported identity. Provider content and commit attribution are

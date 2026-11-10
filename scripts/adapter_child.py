@@ -21,6 +21,9 @@ import sys
 import threading
 import time
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "tests"))
+from fakegh.config import load as load_fake_config
+
 
 def _heartbeat(path: str, stop: threading.Event) -> None:
     while not stop.is_set():
@@ -54,7 +57,7 @@ def main() -> int:
         "pid": os.getpid(),
         "object": object_key,
         "operation": operation_id,
-        "fixture": os.environ.get("FAKEGH_FIXTURE"),
+        "fixture": load_fake_config().get("fixture"),
     }
     try:
         outcome = A.guarded_write(

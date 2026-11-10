@@ -6,9 +6,9 @@ patched, stubbed or monkeypatched: it spawns this file exactly as it would spawn
 ``gh``, and every contract assertion in ``tests/test_c3_adapter.py`` is made
 against what this process actually received.
 
-State lives in ``FAKEGH_STATE`` (a directory per test): ``repo.json`` holds the
-"remote" repository, ``capture.jsonl`` records each invocation. Fixture
-selection is ``FAKEGH_FIXTURE``.
+State lives in a test-only ``GH_CONFIG_DIR`` directory: ``repo.json`` holds the
+files/sha, ``capture.jsonl`` records each invocation. ``fakegh.json`` selects the
+fixture and version without adding test variables to the production allowlist.
 
 Blob and commit SHAs are real git object ids (sha1 over ``blob <len>\\0<bytes>``)
 so the revision the adapter sees behaves like the one GitHub returns: opaque,
@@ -48,9 +48,12 @@ import sys
 import time
 from urllib.parse import parse_qsl, unquote
 
-STATE = os.environ.get("FAKEGH_STATE")
-FIXTURE = (os.environ.get("FAKEGH_FIXTURE") or "write_ok").strip()
-VERSION = (os.environ.get("FAKEGH_VERSION") or "2.40.1").strip()
+from config import load
+
+STATE = os.environ.get("GH_CONFIG_DIR")
+CONFIG = load(STATE) if STATE else {}
+FIXTURE = (CONFIG.get("fixture") or "write_ok").strip()
+VERSION = (CONFIG.get("version") or "2.40.1").strip()
 
 sys.stdout.reconfigure(encoding="utf-8")
 sys.stderr.reconfigure(encoding="utf-8")
@@ -63,7 +66,7 @@ def die(status: int, message: str) -> None:
 
 
 def state_path(name: str) -> str:
-    assert STATE, "FAKEGH_STATE is not set"
+    assert STATE, "GH_CONFIG_DIR is not set"
     return os.path.join(STATE, name)
 
 

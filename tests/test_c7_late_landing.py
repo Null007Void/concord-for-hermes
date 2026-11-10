@@ -68,7 +68,7 @@ def _dispatch_then_time_out(coord, gh, *, operation_id="op-1", value=VALUE):
 
 # ------------------------------------------- the owner's acceptance sequence
 def test_a_request_that_lands_after_reconciliation_is_not_treated_as_safe(gh, tmp_path, monkeypatch):
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_deferred")
+    H.set_config(fixture="write_deferred")
     coord = _coord(tmp_path)
 
     # 1. dispatch, then the request times out. Nothing has been applied yet.
@@ -79,7 +79,7 @@ def test_a_request_that_lands_after_reconciliation_is_not_treated_as_safe(gh, tm
 
     # 2. reconcile while the target is untouched: an unchanged commit and an
     #    unchanged blob. This must NOT be read as "nothing was applied".
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_ok")
+    H.set_config(fixture="write_ok")
     reconciled = A.reconcile_from_provider(
         coord, gh.adapter, operation_id="op-1", object_key=OBJECT
     )
@@ -119,11 +119,11 @@ def test_a_request_that_lands_after_reconciliation_is_not_treated_as_safe(gh, tm
 
 def test_a_deferred_request_that_never_lands_still_keeps_the_hold(gh, tmp_path, monkeypatch):
     """The other half: an unchanged read is not a proof even when nothing lands."""
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_deferred")
+    H.set_config(fixture="write_deferred")
     coord = _coord(tmp_path)
     assert _dispatch_then_time_out(coord, gh)["status"] == K.UNKNOWN
 
-    monkeypatch.setenv("FAKEGH_FIXTURE", "write_ok")
+    H.set_config(fixture="write_ok")
     first = A.reconcile_from_provider(coord, gh.adapter, operation_id="op-1", object_key=OBJECT)
     second = A.reconcile_from_provider(coord, gh.adapter, operation_id="op-1", object_key=OBJECT)
 

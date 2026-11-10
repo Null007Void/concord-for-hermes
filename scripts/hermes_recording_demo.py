@@ -23,6 +23,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def _worker() -> None:
+    sys.path.insert(0, str(ROOT / "tests"))
+    from fakegh.config import configure
     started = time.monotonic()
     with tempfile.TemporaryDirectory(prefix="concord-recording-") as directory:
         root = Path(directory)
@@ -41,8 +43,8 @@ def _worker() -> None:
         os.environ.update(HOME=str(root), USERPROFILE=str(root),
                           HERMES_HOME=str(home), HERMES_RUNTIME_DIR=str(home / "runtime"),
                           CONCORD_DB=str(root / "coordinator.db"), CONCORD_GH_MOCK="1",
-                          FAKEGH_STATE=str(root / "fake"), FAKEGH_VERSION="2.40.1",
-                          FAKEGH_FIXTURE="write_ok")
+                          GH_CONFIG_DIR=str(root / "fake"))
+        configure(root / "fake", fixture="write_ok", version="2.40.1")
         sys.path[:0] = [str(installed), str(ROOT / "tests")]
         import hermes_cli.plugins as P
         import harness
@@ -91,7 +93,7 @@ def _worker() -> None:
              operation_id="recording-denied")
         assert H.writes(root / "fake") == 1
         current = H.repo_state(root / "fake")["files"][H.PATH]["sha"]
-        os.environ["FAKEGH_FIXTURE"] = "write_ambiguous"
+        configure(fixture="write_ambiguous")
         uncertain = call("5. SIMULATED lost response", "unknown", operation_id="recording-unknown",
                          expected_revision=current, content="ambiguous edit\n")
         assert uncertain["held"] is True and uncertain["auto_retry"] is False
@@ -103,7 +105,7 @@ def _worker() -> None:
         assert any(obj["holder"] == "recording-unknown" and obj["holder_state"] == "unknown"
                    for obj in status["objects"])
         print("Registered Hermes status: unresolved operation retained; auto_retry=false.", flush=True)
-        os.environ["FAKEGH_FIXTURE"] = "read_ok"
+        configure(fixture="read_ok")
         before = H.writes(root / "fake")
         settled = run_cli("reconcile", "recording-unknown", "--json")
         assert settled.get("state") == "confirmed", settled

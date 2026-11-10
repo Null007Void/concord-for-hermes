@@ -13,9 +13,11 @@ personal Git identity metadata, credentials, local configuration, coordinator
 databases, live receipts and private test-repository identities, recordings,
 private plans, and separate commercial implementations.
 
-The package was exported from the qualified source and given a new public Git
-history. Runtime behavior is unchanged from the tested source; release work adds
-an extracted-tree install check and updates documentation and notices.
+The initial package was exported from the qualified source and given a new
+public Git history. The subsequent catalog-review fix restricts both GitHub CLI
+subprocess environments and adapts the offline fixture controls. It leaves the
+write protocol, coordinator and plugin API unchanged. See VERIFICATION.md for
+the checks on this delta.
 
 ## Operational disclosure
 

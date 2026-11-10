@@ -100,13 +100,12 @@ EXPECTED: dict[str, dict[str, tuple[str, str, int]]] = {
 
 @contextlib.contextmanager
 def _fake_env(root: pathlib.Path, fixture: str):
-    keys = ("FAKEGH_STATE", "FAKEGH_FIXTURE", "FAKEGH_VERSION", "CONCORD_GH_MOCK")
+    H.set_config(root, fixture=fixture, version="2.40.1")
+    keys = ("GH_CONFIG_DIR", "CONCORD_GH_MOCK")
     saved = {key: os.environ.get(key) for key in keys}
     os.environ.update(
         {
-            "FAKEGH_STATE": str(root),
-            "FAKEGH_FIXTURE": fixture,
-            "FAKEGH_VERSION": "2.40.1",
+            "GH_CONFIG_DIR": str(root),
             "CONCORD_GH_MOCK": "1",
         }
     )
@@ -163,7 +162,7 @@ def _pid_alive(pid: int | str) -> bool:
 def _crash_rows(workdir: pathlib.Path, root: pathlib.Path, base: str) -> list[dict]:
     db = workdir / "kernel.db"
     applied = root / "applied.json"
-    # The fake gh resolves its state files under FAKEGH_STATE, so the heartbeat
+    # The fake gh resolves its state files under GH_CONFIG_DIR, so the heartbeat
     # has to live there too — one directory, no path guessing.
     heartbeat = root / "heartbeat"
     result_file = workdir / "child.json"
